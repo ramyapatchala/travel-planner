@@ -1,5 +1,5 @@
 import streamlit as st
-import openai
+from openai import OpenAI, OpenAIError
 import requests
 
 # App title
@@ -13,8 +13,8 @@ with st.sidebar:
     max_results = st.number_input("Max Results to Display", min_value=1, max_value=20, value=10)
 
 # OpenAI API key
-openai.api_key = st.secrets["openai_api_key"]
-
+openai_api_key = st.secrets["openai_api_key"]
+client = OpenAI(api_key=openai_api_key)
 # Function to fetch data from Google Places API
 def fetch_places_from_google(query, api_key, min_rating, max_results):
     base_url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
@@ -39,8 +39,8 @@ def fetch_places_from_google(query, api_key, min_rating, max_results):
 # Function to query OpenAI GPT-4
 def query_openai(prompt):
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are a helpful travel assistant."},
                 {"role": "user", "content": prompt},
