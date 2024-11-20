@@ -55,7 +55,7 @@ def fetch_places_from_google(query, api_key, min_rating, max_results):
 user_query = st.text_input("🔍 What are you looking for? (e.g., 'restaurants in Los Angeles'):", "")
 
 # Re-use query from search history when selected
-if selected_query and not user_query:
+if selected_query:
     user_query = selected_query
 
 if user_query:
