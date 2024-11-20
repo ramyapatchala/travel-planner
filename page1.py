@@ -1,20 +1,34 @@
 import streamlit as st
-from openai import OpenAI, OpenAIError
 import requests
 
 # App title
-st.title("🌍 **Travel Guide Chatbot with GPT-4** 🤖")
-st.markdown("Your travel assistant powered by Google Places and GPT-4.")
+st.title("🌍 **Interactive Travel Guide Chatbot** 🤖")
+st.markdown("Your personal travel assistant to explore amazing places.")
 
-# Sidebar for customization
+# Sidebar for additional functionalities
 with st.sidebar:
     st.title("🔧 Customize Your Experience")
+    dark_mode = st.checkbox("🌙 Enable Dark Mode")
+    st.markdown("___")
+
+    st.markdown("### Filters")
     min_rating = st.slider("Minimum Rating", 0.0, 5.0, 3.5, step=0.1)
     max_results = st.number_input("Max Results to Display", min_value=1, max_value=20, value=10)
+    st.markdown("___")
 
-# OpenAI API key
-openai_api_key = st.secrets["openai_api_key"]
-client = OpenAI(api_key=openai_api_key)
+    st.markdown("### Search History")
+    search_history = st.session_state.get("search_history", [])
+    if search_history:
+        selected_query = st.selectbox("Recent Searches", options=[""] + search_history)
+    else:
+        selected_query = None
+
+# Save query history in session state
+if "search_history" not in st.session_state:
+    st.session_state["search_history"] = []
+
+# Google Places API Key
+api_key = st.secrets["api_key"]
 
 # Function to fetch data from Google Places API
 def fetch_places_from_google(query, api_key, min_rating, max_results):
@@ -37,62 +51,53 @@ def fetch_places_from_google(query, api_key, min_rating, max_results):
     except Exception as e:
         return {"error": str(e)}
 
-# Function to query OpenAI GPT-4
-def query_openai(prompt):
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "system", "content": "You are a helpful travel assistant."},
-                      {"role": "user", "content": prompt}]
-        )
-        return response['choices'][0]['message']['content']
-    except Exception as e:
-        return f"Error querying OpenAI: {str(e)}"
-
 # Chatbot Input
-user_query = st.text_input("🔍 Ask me anything about travel (e.g., 'What are the best parks in NYC?'): ")
+user_query = st.text_input("🔍 What are you looking for? (e.g., 'restaurants in Los Angeles'):", "")
+
+# Re-use query from search history
+if selected_query and not user_query:
+    user_query = selected_query
 
 if user_query:
-    with st.spinner("Thinking..."):
-        # Fetch places data from Google Places API
-        google_places_api_key = st.secrets["api_key"]
-        places_data = fetch_places_from_google(user_query, google_places_api_key, min_rating, max_results)
+    # Save query in search history
+    if user_query not in st.session_state["search_history"]:
+        st.session_state["search_history"].append(user_query)
 
-        # Generate GPT-4 explanation along with places info
-        if isinstance(places_data, dict) and "error" in places_data:
-            st.error(f"Error: {places_data['error']}")
-        else:
-            places_list = ""
-            for idx, place in enumerate(places_data):
-                places_list += f"{idx + 1}. {place.get('name', 'No Name')}\n"
-                places_list += f"📍 **Address**: {place.get('formatted_address', 'No address available')}\n"
-                places_list += f"🌟 **Rating**: {place.get('rating', 'N/A')} (Based on {place.get('user_ratings_total', 'N/A')} reviews)\n"
-                places_list += f"💲 **Price Level**: {place.get('price_level', 'N/A')}\n"
-                places_list += f"📍 **Location**: ({place['geometry']['location']['lat']}, {place['geometry']['location']['lng']})\n\n"
-            
-            # Pass places data along with user query to GPT-4
-            prompt = f"{user_query}\n\nHere are some relevant places I found:\n\n{places_list}\n\nPlease provide a personalized recommendation or description for these places."
-            gpt_response = query_openai(prompt)
-            
-            # Display GPT-4's response
-            st.markdown("### 🤖 GPT-4's Answer:")
-            st.write(gpt_response)
+    with st.spinner("Fetching amazing places..."):
+        places_data = fetch_places_from_google(user_query, api_key, min_rating, max_results)
 
-            # Display Google Places recommendations
-            st.markdown("### 📍 Top Recommendations from Google Places:")
-            if not places_data:
-                st.warning("No places found matching your criteria.")
-            else:
-                for idx, place in enumerate(places_data):
-                    with st.expander(f"{idx + 1}. {place.get('name', 'No Name')}"):
-                        st.write(f"📍 **Address**: {place.get('formatted_address', 'No address available')}")
-                        st.write(f"🌟 **Rating**: {place.get('rating', 'N/A')} (Based on {place.get('user_ratings_total', 'N/A')} reviews)")
-                        st.write(f"💲 **Price Level**: {place.get('price_level', 'N/A')}")
-                        if "photos" in place:
-                            photo_reference = place["photos"][0]["photo_reference"]
-                            photo_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={photo_reference}&key={google_places_api_key}"
-                            st.image(photo_url, caption=place.get("name", "Photo"), use_column_width=True)
-                        lat = place["geometry"]["location"]["lat"]
-                        lng = place["geometry"]["location"]["lng"]
-                        map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lng}"
-                        st.markdown(f"[📍 View on Map]({map_url})", unsafe_allow_html=True)
+    # Display results
+    st.markdown(f"### Results for: **{user_query}**")
+    if isinstance(places_data, dict) and "error" in places_data:
+        st.error(f"Error: {places_data['error']}")
+    elif not places_data:
+        st.warning("No places found matching your criteria.")
+    else:
+        # Tabs for results
+        st.markdown("### 📍 Top Recommendations")
+        for idx, place in enumerate(places_data):
+            with st.expander(f"{idx + 1}. {place.get('name', 'No Name')}"):
+                # Show place details
+                st.write(f"📍 **Address**: {place.get('formatted_address', 'No address available')}")
+                st.write(f"🌟 **Rating**: {place.get('rating', 'N/A')} (Based on {place.get('user_ratings_total', 'N/A')} reviews)")
+                st.write(f"💲 **Price Level**: {place.get('price_level', 'N/A')}")
+                # Show a photo if available
+                if "photos" in place:
+                    photo_reference = place["photos"][0]["photo_reference"]
+                    photo_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={photo_reference}&key={api_key}"
+                    st.image(photo_url, caption=place.get("name", "Photo"), use_column_width=True)
+                # Map link
+                lat = place["geometry"]["location"]["lat"]
+                lng = place["geometry"]["location"]["lng"]
+                map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lng}"
+                st.markdown(f"[📍 View on Map]({map_url})", unsafe_allow_html=True)
+
+# Footer for User Feedback
+st.markdown("---")
+st.markdown("### 💬 Feedback")
+feedback = st.text_area("Tell us how we can improve:")
+if st.button("Submit Feedback"):
+    if feedback.strip():
+        st.success("Thank you for your feedback!")
+    else:
+        st.error("Please enter some feedback before submitting.")
