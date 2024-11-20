@@ -1,9 +1,6 @@
 import streamlit as st
 import requests
 
-# Set page config for improved visuals
-st.set_page_config(page_title="Interactive Travel Guide Chatbot", page_icon="🌎", layout="wide")
-
 # App title
 st.title("🌍 **Interactive Travel Guide Chatbot** 🤖")
 st.markdown("Your personal travel assistant to explore amazing places.")
