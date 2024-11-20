@@ -55,7 +55,7 @@ user_query = st.text_input("🔍 Ask me anything about travel (e.g., 'What are t
 if user_query:
     with st.spinner("Thinking..."):
         # Fetch places data from Google Places API
-        google_places_api_key = st.secrets["google_places_api_key"]
+        google_places_api_key = st.secrets["api_key"]
         places_data = fetch_places_from_google(user_query, google_places_api_key, min_rating, max_results)
 
         # Generate GPT-4 explanation along with places info
