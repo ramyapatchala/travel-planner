@@ -61,7 +61,7 @@ if user_query:
         st.write(gpt_response)
 
         # Fetch additional structured data
-        google_places_api_key = st.secrets["google_places_api_key"]
+        google_places_api_key = st.secrets["api_key"]
         places_data = fetch_places_from_google(user_query, google_places_api_key, min_rating, max_results)
 
         # Display results
