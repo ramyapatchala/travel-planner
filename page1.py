@@ -7,10 +7,6 @@ st.markdown("Your personal travel assistant to explore amazing places.")
 
 # Sidebar for additional functionalities
 with st.sidebar:
-    st.title("🔧 Customize Your Experience")
-    dark_mode = st.checkbox("🌙 Enable Dark Mode")
-    st.markdown("___")
-
     st.markdown("### Filters")
     min_rating = st.slider("Minimum Rating", 0.0, 5.0, 3.5, step=0.1)
     max_results = st.number_input("Max Results to Display", min_value=1, max_value=20, value=10)
