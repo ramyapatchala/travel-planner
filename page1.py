@@ -46,7 +46,7 @@ def query_openai(prompt):
                 {"role": "user", "content": prompt},
             ],
         )
-        return response["choices"][0]["message"]["content"]
+        return response
     except Exception as e:
         return f"Error querying OpenAI: {str(e)}"
 
