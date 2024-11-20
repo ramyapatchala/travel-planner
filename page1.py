@@ -1,74 +1,19 @@
 import streamlit as st
 import requests
 
-# Sidebar for filters
-st.sidebar.title("Filters")
+# Chatbot interface title
+st.title("Travel Guide Chatbot 🤖")
 
-# Price range slider
-price_range = st.sidebar.slider("Price Range", 20, 120, (20, 120), step=10)
+# Google Places API Key (replace with your actual key)
+api_key = st.secrets['api_key']
 
-# Display price range in a styled format
-st.sidebar.markdown(f"<h4 style='text-align: right;'>${price_range[0]}-${price_range[1]}</h4>", unsafe_allow_html=True)
-
-# Category selection buttons (using columns for layout)
-st.sidebar.markdown("### Categories")
-col1, col2, col3 = st.sidebar.columns(3)
-
-with col1:
-    art = st.button("🎨 Art")
-    music = st.button("🎵 Music")
-
-with col2:
-    food = st.button("🍽️ Food")
-    sports = st.button("🏅 Sports")
-
-with col3:
-    history = st.button("🏛️ History")
-    parks = st.button("🌲 Parks")
-
-# Activity selection buttons
-st.sidebar.markdown("### Activities")
-col4, col5, col6 = st.sidebar.columns(3)
-
-with col4:
-    nightlife = st.button("🌙 Nightlife")
-
-with col5:
-    shopping = st.button("🛍️ Shopping")
-
-with col6:
-    sightseeing = st.button("👁️ Sightseeing")
-
-# Display selected filters
-selected_categories = []
-if art: selected_categories.append('Art')
-if music: selected_categories.append('Music')
-if food: selected_categories.append('Food')
-if sports: selected_categories.append('Sports')
-if history: selected_categories.append('History')
-if parks: selected_categories.append('Parks')
-
-selected_activities = []
-if nightlife: selected_activities.append('Nightlife')
-if shopping: selected_activities.append('Shopping')
-if sightseeing: selected_activities.append('Sightseeing')
-
-st.write(f"Selected Price Range: ${price_range[0]} - ${price_range[1]}")
-st.write(f"Selected Categories: {', '.join(selected_categories)}")
-st.write(f"Selected Activities: {', '.join(selected_activities)}")
-
-# Function to fetch data from Tripadvisor API
-def fetch_places_from_tripadvisor(location, api_key):
-    base_url = "https://api.content.tripadvisor.com/api/v1/location/search"
+# Function to fetch data from Google Places API
+def fetch_places_from_google(query, api_key):
+    base_url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
     params = {
-        "key": api_key,
-        "searchQuery": location,
-        "category": ','.join(selected_categories) if selected_categories else None,
-        "price": f"{price_range[0]}-{price_range[1]}" if price_range else None,
-        "limit": 10  # Number of results to return
+        "query": query,
+        "key": api_key
     }
-    # Remove None values from params
-    params = {k: v for k, v in params.items() if v is not None}
 
     try:
         response = requests.get(base_url, params=params)
@@ -79,25 +24,25 @@ def fetch_places_from_tripadvisor(location, api_key):
     except Exception as e:
         return {"error": str(e)}
 
-# Call the Tripadvisor API
-tripadvisor_api_key = "YOUR_API_KEY"  # Replace with your actual API key
-location_query = "San Francisco"  # You can replace this with a dynamic input
-places_tripadvisor = fetch_places_from_tripadvisor(location_query, tripadvisor_api_key)
+# Chatbot input field
+user_query = st.text_input("Ask me about places to visit (e.g., 'parks in Syracuse'):", "")
 
-# Display fetched places
-st.write("Fetching places from Tripadvisor...")
+# Trigger API call when a query is entered
+if user_query:
+    st.write(f"Fetching details for: **{user_query}**...")
+    places_data = fetch_places_from_google(user_query, api_key)
 
-if "error" in places_tripadvisor:
-    st.write(f"Error fetching data: {places_tripadvisor['error']}")
-else:
-    st.write("Places from Tripadvisor:")
-    locations = places_tripadvisor.get("data", [])
-    if locations:
-        for place in locations:
-            st.write(f"**{place.get('name', 'No Name')}**")
-            st.write(f"📍 Address: {place.get('address', 'No address available')}")
-            st.write(f"💵 Price Level: {place.get('price_level', 'N/A')}")
-            st.write(f"🌟 Rating: {place.get('rating', 'N/A')}")
-            st.write("---")
+    # Display fetched places
+    if "error" in places_data:
+        st.write(f"Error fetching data: {places_data['error']}")
     else:
-        st.write("No places found for the selected location.")
+        st.write("Here are some places I found:")
+        results = places_data.get("results", [])
+        if results:
+            for place in results:
+                st.write(f"**{place.get('name', 'No Name')}**")
+                st.write(f"📍 Address: {place.get('formatted_address', 'No address available')}")
+                st.write(f"🌟 Rating: {place.get('rating', 'N/A')} (Based on {place.get('user_ratings_total', 'N/A')} reviews)")
+                st.write("---")
+        else:
+            st.write("No places found for the given query.")
