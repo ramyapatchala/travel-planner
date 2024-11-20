@@ -67,7 +67,6 @@ if user_query:
         places_data = fetch_places_from_google(user_query, api_key, min_rating, max_results)
 
     # Display results
-    st.markdown(f"### Results for: **{user_query}**")
     if isinstance(places_data, dict) and "error" in places_data:
         st.error(f"Error: {places_data['error']}")
     elif not places_data:
