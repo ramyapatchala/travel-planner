@@ -54,7 +54,7 @@ def fetch_places_from_google(query, api_key, min_rating, max_results):
 # Chatbot Input
 user_query = st.text_input("🔍 What are you looking for? (e.g., 'restaurants in Los Angeles'):", "")
 
-# Re-use query from search history
+# Re-use query from search history when selected
 if selected_query and not user_query:
     user_query = selected_query
 
