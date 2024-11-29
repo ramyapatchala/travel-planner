@@ -31,11 +31,10 @@ def get_weather(location, api_key):
     response = requests.get(url).json()
     
     if response.get("main"):
-        # Convert temperatures from Kelvin to Celsius
         temp = response["main"]["temp"] - 273.15
         feels_like = response["main"]["feels_like"] - 273.15
         return {
-            "location": location,
+            "location": location.title(),
             "temperature": f"{temp:.1f}°C",
             "feels_like": f"{feels_like:.1f}°C",
             "weather": response["weather"][0]["description"].capitalize(),
@@ -43,6 +42,13 @@ def get_weather(location, api_key):
         }
     else:
         return {"error": response.get("message", "Weather data not found.")}
+
+# Function to fetch places from Google Places API
+def fetch_places_from_google(query):
+    base_url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
+    params = {"query": query, "key": api_key}
+    response = requests.get(base_url, params=params).json()
+    return response.get("results", [])
 
 # Function to display weather data
 def display_weather(weather_data):
@@ -59,59 +65,77 @@ def display_weather(weather_data):
             """
         )
 
-# Function to fetch places from Google Places API
-def fetch_places_from_google(query):
-    base_url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
-    params = {"query": query, "key": api_key}
-    response = requests.get(base_url, params=params).json()
-    return response.get("results", [])
-
 # Function to display places
 def display_places(places):
     st.markdown("### 📍 Top Recommendations")
-    for place in places:
-        st.markdown(f"**{place['name']}**")
-        st.markdown(f"- 📍 Address: {place['formatted_address']}")
-        st.markdown(f"- 🌟 Rating: {place.get('rating', 'N/A')}")
+    for idx, place in enumerate(places[:max_results]):
+        with st.expander(f"{idx + 1}. {place['name']}"):
+            st.write(f"**Address:** {place['formatted_address']}")
+            st.write(f"**Rating:** {place.get('rating', 'N/A')} 🌟")
+            st.write(f"**Price Level:** {place.get('price_level', 'N/A')}")
 
-# Function to handle OpenAI response
-def handle_function_calls(response_message):
-    function_call = response_message.function_call
-    function_args = json.loads(function_call.arguments)
-    weather_data = None
-    places = None
-    
-    # Fetch weather
-    if "get_Weather" in function_args:
-        location = function_args["get_Weather"]["location"]
-        weather_data = get_weather(location, st.secrets["OpenWeatherAPIkey"])
-        display_weather(weather_data)
-    
-    # Fetch places
-    if "get_places_from_google" in function_args:
-        query = function_args["get_places_from_google"]["query"]
-        places = fetch_places_from_google(query)
-        display_places(places)
+# Function to handle OpenAI's response with function calls
+def handle_function_calls(response):
+    function_call = response.get("function_call")
+    if function_call:
+        function_args = json.loads(function_call["arguments"])
+        
+        # Get weather if requested
+        if "get_Weather" in function_args:
+            location = function_args["get_Weather"]["location"]
+            weather_data = get_weather(location, st.secrets["OpenWeatherAPIkey"])
+            display_weather(weather_data)
 
-# Input handling
-user_query = st.text_input("🔍 Ask about places or weather:", value=selected_query)
+        # Get places if requested
+        if "get_places_from_google" in function_args:
+            query = function_args["get_places_from_google"]["query"]
+            places = fetch_places_from_google(query)
+            display_places(places)
+
+# User input
+user_query = st.text_input("🔍 What are you looking for?", value=selected_query)
 
 if user_query:
     if user_query not in st.session_state["search_history"]:
         st.session_state["search_history"].append(user_query)
 
-    # Store user message
+    # Store user query
     st.session_state['messages'].append({"role": "user", "content": user_query})
 
-    # Get response (dummy response for illustration)
-    response_message = {
-        "function_call": {
-            "name": "multi_Func",
-            "arguments": json.dumps({
-                "get_Weather": {"location": "San Francisco"},
-                "get_places_from_google": {"query": "parks in New York"}
-            })
-        }
+    # Make a call to OpenAI API
+    payload = {
+        "model": "gpt-4-0613",
+        "messages": st.session_state['messages'],
+        "functions": [
+            {
+                "name": "multi_Func",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "get_Weather": {
+                            "type": "object",
+                            "properties": {"location": {"type": "string"}},
+                            "required": ["location"]
+                        },
+                        "get_places_from_google": {
+                            "type": "object",
+                            "properties": {"query": {"type": "string"}},
+                            "required": ["query"]
+                        }
+                    }
+                }
+            }
+        ],
+        "function_call": "auto"
     }
-    
-    handle_function_calls(response_message)
+
+    headers = {
+        "Authorization": f"Bearer {openai_api_key}",
+        "Content-Type": "application/json"
+    }
+
+    with st.spinner("Fetching results..."):
+        response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload).json()
+        response_message = response["choices"][0]["message"]
+        
+        handle_function_calls(response_message)
