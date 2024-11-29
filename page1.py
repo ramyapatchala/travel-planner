@@ -27,7 +27,7 @@ if "search_history" not in st.session_state:
 api_key = st.secrets["api_key"]
 
 # Function to fetch data from Google Places API
-def fetch_places_from_google(query, api_key, min_rating, max_results):
+def fetch_places_from_google(query):    
     base_url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
     params = {
         "query": query,
