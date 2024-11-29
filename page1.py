@@ -1,25 +1,39 @@
 import streamlit as st
 import requests
-from openai import OpenAI
 import json
-import time
+from openai import OpenAI
 
-# Initialize session state for chat history and search history
+# Initialize session state for chat and search history
 if 'messages' not in st.session_state:
     st.session_state['messages'] = []
 if 'search_history' not in st.session_state:
     st.session_state['search_history'] = []
 
+# Custom CSS for better styling
+st.markdown(
+    """
+    <style>
+    .assistant { color: #4CAF50; font-weight: bold; }
+    .user { color: #2196F3; font-weight: bold; }
+    .chat-box { background-color: #f1f1f1; padding: 10px; border-radius: 10px; }
+    .expander-header { font-weight: bold; font-size: 16px; }
+    .place-details { margin: 5px 0; }
+    .place-title { font-size: 18px; font-weight: bold; }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 # Streamlit app title and sidebar filters
 st.title("🌍 **Interactive Travel Guide Chatbot** 🤖")
-st.markdown("Your personal travel assistant to explore amazing places.")
+st.markdown("Your personal AI assistant to explore and discover amazing places worldwide.")
 
+# Sidebar filters
 with st.sidebar:
-    st.markdown("### Filters")
+    st.markdown("### 🔧 Filters")
     min_rating = st.slider("Minimum Rating", 0.0, 5.0, 3.5, step=0.1)
     max_results = st.number_input("Max Results to Display", min_value=1, max_value=20, value=10)
-    st.markdown("___")
-    st.markdown("### Search History")
+    st.markdown("### 📂 Search History")
     selected_query = st.selectbox("Recent Searches", options=[""] + st.session_state['search_history'])
 
 # API keys
@@ -38,7 +52,6 @@ def fetch_places_from_google(query):
         if response.status_code == 200:
             data = response.json()
             results = data.get("results", [])
-            # Filter by minimum rating and limit results
             filtered_results = [place for place in results if place.get("rating", 0) >= min_rating]
             return filtered_results[:max_results]
         else:
@@ -46,8 +59,7 @@ def fetch_places_from_google(query):
     except Exception as e:
         return {"error": str(e)}
 
-
-# Function for interacting with OpenAI's API
+# Function for OpenAI chat completion
 def chat_completion_request(messages):
     try:
         client = OpenAI(api_key=openai_api_key)
@@ -57,7 +69,7 @@ def chat_completion_request(messages):
             functions=[
                 {
                     "name": "fetch_places_from_google",
-                    "description": "Get details of places like hotels, restaurants, tourism locations, lakes, mountain etc. from Google Places API.",
+                    "description": "Get details of places like hotels, restaurants, and tourist attractions from Google Places API.",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -76,11 +88,12 @@ def chat_completion_request(messages):
 
 # Display chat history
 for message in st.session_state['messages']:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+    role = "assistant" if message["role"] == "assistant" else "user"
+    icon = "🤖" if role == "assistant" else "👤"
+    st.markdown(f"<div class='chat-box'><b class='{role}'>{icon} {role.capitalize()}:</b><br>{message['content']}</div>", unsafe_allow_html=True)
 
-# Handle user input
-user_query = st.text_input("🔍 What are you looking for? (e.g., 'restaurants in Los Angeles'):", value=selected_query)
+# User input and query handling
+user_query = st.text_input("🔍 Ask your travel assistant (e.g., 'best restaurants in Paris'):", value=selected_query)
 
 if user_query:
     if user_query not in st.session_state["search_history"]:
@@ -88,42 +101,40 @@ if user_query:
 
     st.session_state['messages'].append({"role": "user", "content": user_query})
 
-    # Get response from OpenAI
+    # Generate response
     with st.spinner("Generating response..."):
         response = chat_completion_request(st.session_state['messages'])
 
     if response:
-        response_message = response.choices[0].message
-        
-        # Handle function call from GPT
+        response_message = response.choices[0]["message"]
+
+        # Handle function call
         if response_message.function_call:
-            st.markdown('Received function call')
             function_name = response_message.function_call.name
             function_args = json.loads(response_message.function_call.arguments)
             if function_name == "fetch_places_from_google":
                 query = function_args["query"]
                 places = fetch_places_from_google(query)
 
+                # Display places
                 if isinstance(places, dict) and "error" in places:
                     st.error(f"Error: {places['error']}")
                 elif not places:
                     st.warning("No places found matching your criteria.")
                 else:
-                    st.markdown("### 📍 Top Recommendations")
+                    st.markdown("## 📍 Top Recommendations")
                     for idx, place in enumerate(places):
-                        with st.expander(f"{idx + 1}. {place.get('name', 'No Name')}"):
-                            st.write(f"📍 **Address**: {place.get('formatted_address', 'No address available')}")
-                            st.write(f"🌟 **Rating**: {place.get('rating', 'N/A')} (Based on {place.get('user_ratings_total', 'N/A')} reviews)")
-                            st.write(f"💲 **Price Level**: {place.get('price_level', 'N/A')}")
+                        with st.expander(f"{idx + 1}. {place.get('name', 'No Name')}", expanded=True):
+                            st.markdown(f"**Address**: {place.get('formatted_address', 'No address available')}")
+                            st.markdown(f"**Rating**: 🌟 {place.get('rating', 'N/A')} (Based on {place.get('user_ratings_total', 'N/A')} reviews)")
+                            st.markdown(f"**Price Level**: 💲 {place.get('price_level', 'N/A')}")
                             if "photos" in place:
                                 photo_ref = place["photos"][0]["photo_reference"]
                                 photo_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={photo_ref}&key={api_key}"
                                 st.image(photo_url, caption=place.get("name", "Photo"), use_column_width=True)
                             lat, lng = place["geometry"]["location"].values()
-                            map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lng}"
-                            st.markdown(f"[📍 View on Map]({map_url})", unsafe_allow_html=True)
-        
+                            st.markdown(f"[📍 View on Map](https://www.google.com/maps/search/?api=1&query={lat},{lng})", unsafe_allow_html=True)
+
         else:
             st.session_state['messages'].append({"role": "assistant", "content": response_message.content})
-            with st.chat_message("assistant"):
-                st.markdown(response_message.content)
+            st.markdown(f"<div class='chat-box'><b class='assistant'>🤖 Assistant:</b><br>{response_message.content}</div>", unsafe_allow_html=True)
