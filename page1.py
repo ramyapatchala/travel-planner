@@ -132,7 +132,7 @@ def chat_completion_request(messages):
 
 # Handle function calls from GPT response
 def handle_function_calls(response_message):
-    function_call = response_message["function_call"]
+    function_call = response_message.function_call
     if function_call:
         st.markdown("Received multi-function call.")
         function_name = function_call["name"]
