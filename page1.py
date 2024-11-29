@@ -50,7 +50,7 @@ def fetch_places_from_google(query):
 def chat_completion_request(messages):
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4-0613",
+            model="gpt-4o",
             messages=messages,
             functions=[
                 {
