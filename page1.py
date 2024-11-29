@@ -69,7 +69,7 @@ def chat_completion_request(messages):
             functions=[
                 {
                     "name": "fetch_places_from_google",
-                    "description": "Get details of places like hotels, restaurants, and tourist attractions from Google Places API.",
+                    "description": "Get details of places like hotels, restaurants, lakes, mountains, (Scenic spots), tourist attractions, and various facilities from Google Places API.",
                     "parameters": {
                         "type": "object",
                         "properties": {
