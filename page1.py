@@ -96,7 +96,7 @@ if user_query:
         response_message = response.choices[0].message
         
         # Handle function call from GPT
-        if response_message.get("function_call"):
+        if response_message.function_call:
             function_name = response_message.function_call.name
             function_args = json.loads(response_message.function_call.arguments)
             if function_name == "fetch_places_from_google":
