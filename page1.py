@@ -60,7 +60,7 @@ if user_query:
         st.session_state["search_history"].append(user_query)
 
     with st.spinner("Fetching amazing places..."):
-        places_data = fetch_places_from_google(user_query, api_key, min_rating, max_results)
+        places_data = fetch_places_from_google(user_query)
 
     # Display results
     if isinstance(places_data, dict) and "error" in places_data:
