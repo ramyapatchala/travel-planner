@@ -145,7 +145,8 @@ def handle_function_calls(response_message):
             location = function_args["get_Weather"].get("location")
             if location:
                 st.markdown(f"Fetching weather for: **{location}**")
-                weather_data = get_Weather(location, api_key)
+                open_api_key = st.secrets['OpenWeatherAPIkey']
+                weather_data = get_Weather(location, open_api_key)
                 st.write("### 🌤️ Current Weather")
                 st.json(weather_data)
 
