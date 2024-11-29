@@ -97,6 +97,7 @@ if user_query:
         
         # Handle function call from GPT
         if response_message.function_call:
+            st.markdown('Received function call')
             function_name = response_message.function_call.name
             function_args = json.loads(response_message.function_call.arguments)
             if function_name == "fetch_places_from_google":
