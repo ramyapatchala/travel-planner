@@ -123,6 +123,6 @@ if user_query:
                             st.markdown(f"[📍 View on Map]({map_url})", unsafe_allow_html=True)
         
         else:
-            st.session_state['messages'].append({"role": "assistant", "content": response_message["content"]})
+            st.session_state['messages'].append({"role": "assistant", "content": response_message.content})
             with st.chat_message("assistant"):
-                st.markdown(response_message["content"])
+                st.markdown(response_message.content)
