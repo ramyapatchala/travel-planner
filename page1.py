@@ -93,12 +93,12 @@ if user_query:
         response = chat_completion_request(st.session_state['messages'])
 
     if response:
-        response_message = response["choices"][0]["message"]
+        response_message = response.choices[0].message
         
         # Handle function call from GPT
         if response_message.get("function_call"):
-            function_name = response_message["function_call"]["name"]
-            function_args = json.loads(response_message["function_call"]["arguments"])
+            function_name = response_message.function_call.name
+            function_args = json.loads(response_message.function_call.arguments)
             if function_name == "fetch_places_from_google":
                 query = function_args["query"]
                 places = fetch_places_from_google(query)
