@@ -106,7 +106,7 @@ if user_query:
         response = chat_completion_request(st.session_state['messages'])
 
     if response:
-        response_message = response.choices[0]["message"]
+        response_message = response.choices[0].message
 
         # Handle function call
         if response_message.function_call:
