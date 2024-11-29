@@ -200,7 +200,7 @@ if user_query:
         response_message = response.choices[0].message
         
         # Handle function call from GPT
-        if response_message.get("function_call"):
+        if response_message.function_call:
             handle_function_calls(response_message)
         else:
             st.session_state['messages'].append({"role": "assistant", "content": response_message.content})
