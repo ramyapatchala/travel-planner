@@ -46,10 +46,12 @@ def fetch_places_from_google(query):
     except Exception as e:
         return {"error": str(e)}
 
+
 # Function for interacting with OpenAI's API
 def chat_completion_request(messages):
     try:
-        response = openai.ChatCompletion.create(
+        client = OpenAI(api_key=openai_api_key)
+        response = client.chat.completions.create(
             model="gpt-4o",
             messages=messages,
             functions=[
