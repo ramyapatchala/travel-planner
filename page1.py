@@ -119,6 +119,7 @@ def handle_function_calls(response_message):
     function_call = response_message.function_call
     if function_call:
         st.markdown("Received multi-function call.")
+        st.write(function_call)
         function_name = function_call.name
         function_args = json.loads(function_call.arguments)
         
