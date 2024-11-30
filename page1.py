@@ -143,11 +143,11 @@ def handle_function_calls(response_message):
                 )
                 full_response = []
                 if stream:
-                for chunk in stream:
-                    if chunk.choices[0].delta.content is not None:
-                        full_response += chunk.choices[0].delta.content
-                        message_placeholder.markdown(full_response + "▌")
-                message_placeholder.markdown(full_response)
+                    for chunk in stream:
+                        if chunk.choices[0].delta.content is not None:
+                            full_response += chunk.choices[0].delta.content
+                            message_placeholder.markdown(full_response + "▌")
+                    message_placeholder.markdown(full_response)
                 
         # Process get_places_from_google if provided
         if function_args.get("get_places_from_google"):
