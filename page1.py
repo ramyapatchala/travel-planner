@@ -131,8 +131,15 @@ def handle_function_calls(response_message):
                 st.markdown(f"Fetching weather for: **{location}**")
                 open_api_key = st.secrets['OpenWeatherAPIkey']
                 weather_data = get_Weather(location, open_api_key)
-                st.write("### 🌤️ Current Weather")
-                st.json(weather_data)
+                messages = []
+                messages.add("Explain in normal english in 5 sentences including what kind of clothing can be wore and what tips need to be taken")
+                messages.add(weather_data)
+                client = OpenAI(api_key=openai_api_key)
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=messages
+                )
+                st.markdown(response)
 
         # Process get_places_from_google if provided
         if function_args.get("get_places_from_google"):
