@@ -131,9 +131,10 @@ def handle_function_calls(response_message):
                 st.markdown(f"Fetching weather for: **{location}**")
                 open_api_key = st.secrets['OpenWeatherAPIkey']
                 weather_data = get_Weather(location, open_api_key)
-                messages = []
-                messages.add("Explain in normal english in 5 sentences including what kind of clothing can be wore and what tips need to be taken")
-                messages.add(weather_data)
+                messages = [
+                    {"role": "user", "content": "Explain in normal English in few words including what kind of clothing can be worn and what tips need to be taken based on the following weather data."},
+                    {"role": "user", "content": json.dumps(weather_data)}
+                ]
                 client = OpenAI(api_key=openai_api_key)
                 response = client.chat.completions.create(
                     model="gpt-4o",
