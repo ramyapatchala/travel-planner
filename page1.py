@@ -136,12 +136,19 @@ def handle_function_calls(response_message):
                     {"role": "user", "content": json.dumps(weather_data)}
                 ]
                 client = OpenAI(api_key=openai_api_key)
-                response = client.chat.completions.create(
+                stream = client.chat.completions.create(
                     model="gpt-4o",
-                    messages=messages
+                    messages=messages,
+                    stream = True
                 )
-                st.markdown(response)
-
+                full_response = []
+                if stream:
+                for chunk in stream:
+                    if chunk.choices[0].delta.content is not None:
+                        full_response += chunk.choices[0].delta.content
+                        message_placeholder.markdown(full_response + "▌")
+                message_placeholder.markdown(full_response)
+                
         # Process get_places_from_google if provided
         if function_args.get("get_places_from_google"):
             query = function_args["get_places_from_google"].get("query")
