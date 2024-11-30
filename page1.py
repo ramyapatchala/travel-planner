@@ -141,7 +141,8 @@ def handle_function_calls(response_message):
                     messages=messages,
                     stream = True
                 )
-                full_response = []
+                message_placeholder = st.empty()
+                full_response = ""
                 if stream:
                     for chunk in stream:
                         if chunk.choices[0].delta.content is not None:
