@@ -6,5 +6,4 @@ st.set_page_config(page_title="Interactive Travel Guide Chatbot", page_icon="ğŸŒ
 page1 = st.Page("page1.py", title="Explore")
 page2 = st.Page("page2.py", title="Itenary")
 pg = st.navigation([page1, page2])
-st.set_page_config(page_title="Trip Advisor")
 pg.run()
