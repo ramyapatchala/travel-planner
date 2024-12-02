@@ -35,8 +35,8 @@ with st.sidebar:
             st.success("Itinerary cleared!")
 
 # API keys
-api_key = st.secrets["google_api_key"]
-openai_api_key = st.secrets["openai_key"]
+api_key = st.secrets["api_key"]
+openai_api_key = st.secrets["key1"]
 
 # Google Places Photo API URL constructor
 def get_photo_url(photo_reference):
