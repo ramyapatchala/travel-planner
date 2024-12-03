@@ -16,7 +16,7 @@ with st.sidebar:
     max_results = st.number_input("Max Results to Display", min_value=1, max_value=20, value=10)
 
 # API keys
-OPENAI_API_KEY = st.secrets["key1"]
+OPENAI_API_KEY = st.secrets["openai_api_key"]
 WEATHER_API_KEY = st.secrets["OpenWeatherAPIkey"]
 GOOGLE_PLACES_API_KEY = st.secrets["api_key"]
 
