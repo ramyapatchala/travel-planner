@@ -16,9 +16,9 @@ with st.sidebar:
     max_results = st.number_input("Max Results to Display", min_value=1, max_value=20, value=10)
 
 # API keys
-OPENAI_API_KEY = st.secrets["openai_api_key"]
-WEATHER_API_KEY = st.secrets["OpenWeatherAPIkey"]
-GOOGLE_PLACES_API_KEY = st.secrets["api_key"]
+openai_key = st.secrets["openai_api_key"]
+weather_key = st.secrets["OpenWeatherAPIkey"]
+google_places_key = st.secrets["api_key"]
 
 # Define tool functions
 def get_weather(location):
@@ -27,7 +27,7 @@ def get_weather(location):
         if "," in location:
             location = location.split(",")[0].strip()
         
-        url = f"https://api.openweathermap.org/data/2.5/weather?q={location}&appid={WEATHER_API_KEY}&units=metric"
+        url = f"https://api.openweathermap.org/data/2.5/weather?q={location}&appid={weather_key}&units=metric"
         response = requests.get(url)
         data = response.json()
         
@@ -53,7 +53,7 @@ def fetch_places(query):
         base_url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
         params = {
             "query": query,
-            "key": GOOGLE_PLACES_API_KEY
+            "key": google_places_key
         }
         response = requests.get(base_url, params=params)
         data = response.json()
@@ -87,7 +87,7 @@ places_tool = Tool(
 )
 
 # Initialize LangChain components
-llm = ChatOpenAI(api_key=OPENAI_API_KEY, model="gpt-4", temperature=0)
+llm = ChatOpenAI(api_key=openai_key, model="gpt-4", temperature=0)
 memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
 tools = [weather_tool, places_tool]
