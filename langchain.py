@@ -1,5 +1,5 @@
 import streamlit as st
-from langchain.agents import initialize_agent, Tool, AgentType
+from langchain.agents import Tool, AgentType
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 import requests
