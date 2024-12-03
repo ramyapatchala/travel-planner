@@ -2,5 +2,5 @@ streamlit
 requests
 streamlit_option_menu
 openai
-langchain
+langchain==0.0.308
 python-dotenv
