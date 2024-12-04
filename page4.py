@@ -81,7 +81,8 @@ def get_ai_response(query, context):
         {"role": "system", "content": "You are a helpful assistant with knowledge about the trips and safety of people! You politely answer the questions."},
         {"role": "user", "content": f"Context: {context}\n\nQuestion: {query}"}
     ]
-    messages.append(st.session_state.messages)
+    for msg in st.session_state.messages:
+        messages.append(msg)
     response = openai_client.chat.completions.create(
         model="gpt-4o-mini",
         messages=messages,
@@ -105,7 +106,7 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # Handle user input and respond
-if prompt := st.chat_input("Hey Travelor, How can I help you?"):
+if prompt := st.chat_input("Hello Travelor, How can I help you?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
@@ -121,12 +122,12 @@ if prompt := st.chat_input("Hey Travelor, How can I help you?"):
         context = " ".join([doc for doc in results['documents'][0]])
         response = get_ai_response(prompt, context)
         # Indicate that the bot is using context from the RAG pipeline
-        st.session_state.messages.append({"role": "assistant", "content": response})
-        with st.chat_message("assistant"):
+        st.session_state.messages.append({"role": "system", "content": response})
+        with st.chat_message("system"):
             st.markdown(response)
     else:
         # If no relevant documents were found, generate response without document context
         response = get_ai_response(prompt, "")
-        st.session_state.messages.append({"role": "assistant", "content":response})
-        with st.chat_message("assistant"):
+        st.session_state.messages.append({"role": "system", "content":response})
+        with st.chat_message("system"):
             st.markdown(response)
