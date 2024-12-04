@@ -35,11 +35,11 @@ def fetch_and_resize_image(url, size=(200, 200)):
     except Exception as e:
         return None  # Return None if fetching or resizing fails
 
-# Display places in 3x3 grid layout with uniform image sizes
+# Display places in 3x3 grid layout with uniform image sizes and consistent spacing
 def display_places_grid(places):
-    cols = st.columns(3)
+    cols = st.columns(3, gap="medium")  # Adjust gap for spacing between columns
     for idx, place in enumerate(places):
-        with cols[idx % 3]:
+        with cols[idx % 3]:  # Distribute places evenly across 3 columns
             name = place.get("name", "No Name")
             lat, lng = place["geometry"]["location"].values()
             map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lng}"
@@ -48,8 +48,9 @@ def display_places_grid(places):
                 photo_ref = place["photos"][0]["photo_reference"]
                 photo_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={photo_ref}&key={api_key}"
 
+            # Fetch and display image
             if photo_url:
-                img = fetch_and_resize_image(photo_url)
+                img = fetch_and_resize_image(photo_url, size=(200, 200))  # Set uniform size
                 if img:
                     st.image(img, caption=name, use_column_width=False)
                 else:
@@ -57,12 +58,19 @@ def display_places_grid(places):
             else:
                 st.write(name)
 
+            # Link to map
             st.markdown(f"[📍 View on Map]({map_url})", unsafe_allow_html=True)
+            
+            # Manage itinerary bucket
             if name in st.session_state['itinerary_bucket']:
                 st.button("Added", disabled=True, key=f"added_{idx}")
             else:
                 if st.button("Add to Itinerary", key=f"add_{idx}"):
                     st.session_state['itinerary_bucket'].append(name)
+
+        # Add vertical spacing between rows
+        if (idx + 1) % 3 == 0:  # After every 3 places
+            st.write("")  # Empty line for spacing between rows
 
 # Function to generate an itinerary using LangChain
 def plan_itinerary_with_langchain():
