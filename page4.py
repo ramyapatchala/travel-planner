@@ -81,6 +81,7 @@ def get_ai_response(query, context):
         {"role": "system", "content": "You are a helpful assistant with knowledge about the trips and safety of people! You politely answer the questions."},
         {"role": "user", "content": f"Context: {context}\n\nQuestion: {query}"}
     ]
+    messages.append(st.session_state.messages)
     response = openai_client.chat.completions.create(
         model="gpt-4o-mini",
         messages=messages,
