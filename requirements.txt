@@ -1,5 +1,4 @@
 streamlit
-requests
 openai
 bs4
 numpy
