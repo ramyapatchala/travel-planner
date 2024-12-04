@@ -1,7 +1,13 @@
 streamlit
-crewai
 requests
 streamlit_option_menu
 openai
 langchain
 streamlit-chat
+bs4
+numpy
+audio_recorder_streamlit
+chromadb
+pysqlite3-binary
+requests
+tornado
