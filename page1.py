@@ -50,7 +50,7 @@ functions = [
                     },
                     "get_places_from_google": {
                         "name": "get_places_from_google",
-                        "description": "Get details of places like hotels, restaurants, tourism locations, lakes, mountain etc. from Google Places API.",
+                        "description": "Get details of places like hotels, restaurants, tourism locations, lakes, mountain, parks etc. from Google Places API. As long as it is some information about Cities or Towns, any minute details of facilities or places in cities, we can get that information here",
                         "parameters": {
                             "type": "object",
                             "properties": {
