@@ -119,15 +119,13 @@ if prompt := st.chat_input("Hey Travelor, How can I help you?"):
         # Retrieve document content from the vector DB and use it as context
         context = " ".join([doc for doc in results['documents'][0]])
         response = get_ai_response(prompt, context)
-
         # Indicate that the bot is using context from the RAG pipeline
-        final_response = f"{response}"
-        st.session_state.messages.append({"role": "assistant", "content": final_response})
+        st.session_state.messages.append({"role": "assistant", "content": response})
         with st.chat_message("assistant"):
-            st.markdown(final_response)
+            st.markdown(response)
     else:
         # If no relevant documents were found, generate response without document context
         response = get_ai_response(prompt, "")
         st.session_state.messages.append({"role": "assistant", "content":response})
         with st.chat_message("assistant"):
-            st.markdown(final_response)
+            st.markdown(response)
