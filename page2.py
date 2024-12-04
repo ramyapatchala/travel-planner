@@ -147,8 +147,10 @@ if user_query:
         display_places_grid(places_data)
 
     # Show itinerary bucket
+    # Show itinerary bucket
     st.markdown("### 📋 Itinerary Bucket")
     if st.session_state['itinerary_bucket']:
+        # Display itinerary items with remove buttons
         for place in st.session_state['itinerary_bucket']:
             col1, col2 = st.columns([3, 1])
             with col1:
@@ -156,9 +158,14 @@ if user_query:
             with col2:
                 if st.button("Remove", key=f"remove_{place}"):
                     st.session_state['itinerary_bucket'].remove(place)
+    
+        # Button to clear the entire itinerary bucket
+        if st.button("Clear Itinerary Bucket"):
+            st.session_state['itinerary_bucket'] = []  # Clear the list
+            st.success("Itinerary bucket cleared!")
     else:
         st.write("Your itinerary bucket is empty.")
-    
+
     # Generate itinerary button
     if st.button("Generate AI Itinerary"):
         plan_itinerary_with_langchain()
