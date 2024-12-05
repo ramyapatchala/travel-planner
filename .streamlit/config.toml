@@ -1,0 +1,10 @@
+[client]
+showErrorDetails = false
+
+
+[theme]
+primaryColor = "#1E88E5"  # Sky Blue
+backgroundColor = "#F3F4F6"  # Light Gray
+secondaryBackgroundColor = "#B0BEC5"  # Steel Gray
+textColor = "#37474F"  # Dark Slate
+font = "sans serif"
