@@ -5,6 +5,8 @@ import json
 import time
 
 # Initialize session state for chat history and search history
+if 'messages' not in st.session_state:
+    st.session_state['messages'] = []
 if 'search_history' not in st.session_state:
     st.session_state['search_history'] = []
 
@@ -24,42 +26,43 @@ with st.sidebar:
 api_key = st.secrets["api_key"]
 openai_api_key = st.secrets["key1"]
 
-tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "get_Weather",
-            "description": "Get the weather for the location mentioned in the user prompt",
+
+functions = [
+            {
+            "name": "multi_Func",
+            "description": "Call two functions in one call",
             "parameters": {
                 "type": "object",
                 "properties": {
-                        "location": {
-                            "type": "string",
-                            "description": "The city and state, e.g. San Francisco, CA",
+                    "get_Weather": {
+                        "name": "get_Weather",
+                        "description": "Get the weather for the location.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "location": {
+                                    "type": "string",
+                                    "description": "The city and state, e.g. San Francisco, CA",
+                                }
+                            },
+                            "required": ["location"],
                         }
-                },
-                "required": ["location"],
-            },
-        },
-    },
-        {
-        "type": "function",
-        "function": {
-            "name": "get_places_from_google",
-            "description": "Get data about places, hotels, restaurants, tourism locations, lakes, mountain, parks etc. from Google Places API. As long as it is some information about Cities or Towns, any minute details of facilities or places in cities, we can get that information here e.g places in New York, Tourist places in Syracuse etc give details about places in that cities",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                               "query": {"type": "string", 
-                                         "description": "Places or facilities in city/location e.g Places in New York"}
-                },
-                "required": ["query"],
-            },
-        },
-    }
+                    },
+                    "get_places_from_google": {
+                        "name": "get_places_from_google",
+                        "description": "Get details of places like hotels, restaurants, tourism locations, lakes, mountain, parks etc. from Google Places API. As long as it is some information about Cities or Towns, any minute details of facilities or places in cities, we can get that information here e.g places in New York, Tourist places in Syracuse etc give details about places in that cities",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                               "query": {"type": "string", "description": "Search query for Google Places API."}
+                            },
+                            "required": ["query"],
+                        }
+                    }
+                }, "required": ["get_Weather", "get_places_from_google"],
+            }
+        }
 ]
-
-
 
 # Weather data function
 def get_Weather(location, API_key):
@@ -102,8 +105,8 @@ def chat_completion_request(messages):
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=messages,
-            tools=tools,
-            tool_choice="auto",
+            functions = functions,
+            function_call="auto"
         )
         return response
     except Exception as e:
@@ -112,18 +115,17 @@ def chat_completion_request(messages):
 
 
 # Handle function calls from GPT response
-def handle_tool_calls(tool_call):
-    arguments = {}
-    if len(tool_call) == 2:
-        for tool in tool_call:
-            arguments.update(json.loads(tool.function.arguments))
-    else:
-        tool_call_data = tool_call[0]
-        arguments = json.loads(tool_call_data.function.arguments)
-    weather_data, places_data = None, None
+def handle_function_calls(response_message):
+    function_call = response_message.function_call
+    if function_call:
+        function_name = function_call.name
+        function_args = json.loads(function_call.arguments)
+        
+        weather_data, places_data = None, None
 
-    if 'location' in arguments:
-            location = arguments.get("location")
+        # Process get_Weather if provided
+        if function_args.get("get_Weather"):
+            location = function_args["get_Weather"].get("location")
             if location:
                 st.markdown(f"Fetching weather for: **{location}**")
                 open_api_key = st.secrets['OpenWeatherAPIkey']
@@ -138,7 +140,6 @@ def handle_tool_calls(tool_call):
                     messages=messages,
                     stream = True
                 )
-                location = ''
                 message_placeholder = st.empty()
                 full_response = ""
                 if stream:
@@ -149,12 +150,12 @@ def handle_tool_calls(tool_call):
                     message_placeholder.markdown(full_response)
                 
         # Process get_places_from_google if provided
-    if 'query' in arguments:
-            query = arguments.get("query")
+        if function_args.get("get_places_from_google"):
+            query = function_args["get_places_from_google"].get("query")
             if query:
                 st.markdown(f"Searching for: **{query}**")
                 places_data = fetch_places_from_google(query)
-                query = ''
+
                 if isinstance(places_data, dict) and "error" in places_data:
                     st.error(f"Error: {places_data['error']}")
                 elif not places_data:
@@ -174,26 +175,34 @@ def handle_tool_calls(tool_call):
                             map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lng}"
                             st.markdown(f"[📍 View on Map]({map_url})", unsafe_allow_html=True)
 
+    else:
+        st.error("Function call is incomplete.")
+
+# Display chat history
+for message in st.session_state['messages']:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
         
-# handle user input
+# Display chat history and handle user input
 user_query = st.text_input("🔍 What are you looking for? (e.g., 'restaurants in Los Angeles'):", value=selected_query)
 
 if user_query:
     if user_query not in st.session_state["search_history"]:
         st.session_state["search_history"].append(user_query)
-    user_query = user_query + " and tell me the weather at this place"
-    message = {"role": "user", "content": user_query}
+
+    st.session_state['messages'].append({"role": "user", "content": user_query})
 
     # Get response from OpenAI
     with st.spinner("Generating response..."):
-        response = chat_completion_request([message])
+        response = chat_completion_request(st.session_state['messages'])
 
     if response:
-        tool_call = response.choices[0].message.tool_calls
+        response_message = response.choices[0].message
         
         # Handle function call from GPT
-        if tool_call:
-            handle_tool_calls(tool_call)
+        if response_message.function_call:
+            handle_function_calls(response_message)
         else:
+            st.session_state['messages'].append({"role": "assistant", "content": response_message.content})
             with st.chat_message("assistant"):
                 st.markdown(response_message.content)
